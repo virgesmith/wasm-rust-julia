@@ -1,6 +1,5 @@
 use wasm_bindgen::prelude::*;
 
-use crate::Cell;
 use complex::Cplx;
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
@@ -40,7 +39,7 @@ pub struct ZPlane {
   width: u32,
   height: u32,
   c: Cplx<f64>, // as in z' = z*z + c
-  cells: Vec<Cell>,
+  cells: Vec<u8>,
 }
 
 const MAX_DEPTH: u8 = 14;
@@ -50,7 +49,7 @@ impl ZPlane {
 
   pub fn new(cr: f64, ci: f64, scale: f64, width: u32, height: u32) -> ZPlane {
 
-    let cells = vec![Cell::Dead; (width * height) as usize];
+    let cells = vec![0u8; (width * height) as usize];
 
     let mut zplane = ZPlane {
       offset: (width / 2) as f64,
@@ -72,7 +71,7 @@ impl ZPlane {
     self.height
   }
 
-  pub fn cells(&self) -> *const Cell {
+  pub fn cells(&self) -> *const u8 {
     self.cells.as_ptr()
   }
 
@@ -88,31 +87,10 @@ impl ZPlane {
     self.draw();
   }
   
-  // fn draw(&mut self) {
-  //   //let mut next = self.cells.clone();
-  //   let mut next = vec![Cell::Dead; (self.width * self.height) as usize];
-
-  //   let mut rng = LCG::new(19937);
-
-  //   let mut z = Cplx::new(0.0, 0.0);
-  //   let mut sign = 1.0;
-  //   for _ in 0..1000 {
-  //     if rng.next_1() % 2 == 1 { sign *= -1.0; }
-  //     z = (z - self.c).sqrt() * sign;
-  //     let idx = self.get_index(&z);
-  //     next[idx] = Cell::Alive;
-  //     let idx = self.get_index(&-z);
-  //     next[idx] = Cell::Alive;
-  //     //if rand::random() { z = -z; }
-  //     //z = -z;
-  //     //log!("z={}", z);
-  //   }
-  //   self.cells = next;
-  // }
-
+  // Uses the MIIM algorithm
   fn draw(&mut self) {
     //let mut next = self.cells.clone();
-    let mut next = vec![Cell::Dead; (self.width * self.height) as usize];
+    let mut next = vec![0u8; (self.width * self.height) as usize];
 
     let mut rng = LCG::new(19937);
 
@@ -128,24 +106,18 @@ impl ZPlane {
     self.cells = next;
   }
 
-  fn draw_impl(&mut self, z: Cplx<f64>, cells: &mut Vec<Cell>, depth: u8) {
+  fn draw_impl(&mut self, z: Cplx<f64>, cells: &mut Vec<u8>, depth: u8) {
 
     let z = (z - self.c).sqrt();
 
     let idx = self.get_index(&z);
-    cells[idx] = Cell::Alive;
+    cells[idx] += 1;
     let idx = self.get_index(&-z);
-    cells[idx] = Cell::Alive;
+    cells[idx] += 1;
     if depth >= MAX_DEPTH { return; }
 
     self.draw_impl(z, cells, depth+1);
     self.draw_impl(-z, cells, depth+1);
-
   }
-
-
-  // fn get_index(&self, row: u32, column: u32) -> usize {
-  //   (row * self.width + column) as usize
-  // }
 
 }

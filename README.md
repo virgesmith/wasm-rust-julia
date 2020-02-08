@@ -7,6 +7,7 @@ Build:
 ```
 $ wasm-pack build
 ```
+
 Serve:
 ```
 $ cd www && npm run start
