@@ -83,7 +83,7 @@ impl ZPlane {
 
   pub fn tick(&mut self) {
     let theta = self.c.arg();
-    self.c = Cplx::from_normarg(self.c.norm() + 0.01 * (theta/1.57).sin(), theta + 0.01);
+    self.c = Cplx::from_normarg(self.c.norm() + 0.005 * (theta/1.57).sin(), theta + 0.01);
     self.draw();
   }
   
