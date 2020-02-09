@@ -1,6 +1,7 @@
 use wasm_bindgen::prelude::*;
 
-use complex::Cplx;
+//use complex::Cplx;
+use num_complex::Complex as Cplx;
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 macro_rules! log {
@@ -76,14 +77,14 @@ impl ZPlane {
   }
 
   fn get_index(&self, z: &Cplx<f64>) -> usize {
-    let c = (self.offset + z.re() * self.mult) as u32;
-    let r = (self.offset + z.im() * self.mult) as u32;
+    let c = (self.offset + z.re/*()*/ * self.mult) as u32;
+    let r = (self.offset + z.im/*()*/ * self.mult) as u32;
     (r * self.width + c) as usize
   }
 
   pub fn tick(&mut self) {
     let theta = self.c.arg();
-    self.c = Cplx::from_normarg(self.c.norm() + 0.005 * (theta/1.57).sin(), theta + 0.01);
+    self.c = Cplx::from_polar/*from_normarg*/(&(self.c.norm() + 0.005 * (theta/1.57).sin()), &(theta + 0.01));
     self.draw();
   }
   

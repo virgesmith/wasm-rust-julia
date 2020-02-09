@@ -1,5 +1,7 @@
 # wasm-rust-julia
 
+See it in action [here](https://friarswood.net)
+
 Rendering Julia sets in the browser using rust compiled to WebAssembly
 
 Build:
