@@ -3,12 +3,7 @@ use wasm_bindgen::prelude::*;
 //use complex::Cplx;
 use num_complex::Complex as Cplx;
 
-// A macro to provide `println!(..)`-style syntax for `console.log` logging.
-macro_rules! log {
-  ( $( $t:tt )* ) => {
-      web_sys::console::log_1(&format!( $( $t )* ).into());
-  }
-}
+use crate::utils;
 
 // need to copy this from rand beacuse the crate links to C++ static libs
 pub struct LCG {
@@ -49,6 +44,8 @@ const MAX_DEPTH: u8 = 14;
 impl ZPlane {
 
   pub fn new(cr: f64, ci: f64, scale: f64, width: u32, height: u32) -> ZPlane {
+
+    utils::set_panic_hook();
 
     let cells = vec![0u8; (width * height) as usize];
 
