@@ -30,6 +30,7 @@ impl LCG {
 
 #[wasm_bindgen]
 pub struct ZPlane {
+  scale: f64,
   offset: f64,
   mult: f64, 
   width: u32,
@@ -55,6 +56,7 @@ impl ZPlane {
     let cells = vec![0u8; (width * height) as usize];
 
     let mut zplane = ZPlane {
+      scale: scale,
       offset: (width / 2) as f64,
       mult: (width / 2) as f64 / scale,
       width: width,
@@ -107,6 +109,10 @@ impl ZPlane {
     //let dr = 0.0001 * (1.0 - (self.rng.next_1() as f64 / std::i32::MAX as f64));
     //self.c = Cplx::from_polar(&(self.c.norm() * (1.0 + dr)), &(theta + 0.01));
     self.c += Cplx::new((self.a.re - self.c.re) * SPEED, (self.a.im - self.c.im) * SPEED);
+    if self.c.re > self.scale { self.c.re = self.scale; }
+    if self.c.re < -self.scale { self.c.re = -self.scale; }
+    if self.c.im > self.scale { self.c.im = self.scale; }
+    if self.c.im < -self.scale { self.c.im = -self.scale; }
 
     self.draw();
   }
