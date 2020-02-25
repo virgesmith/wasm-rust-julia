@@ -8,7 +8,7 @@ function getColours() {
   for (var i=0; i < 256; ++i) {
     var x = Math.round((16 - Math.sqrt(i))*16) - 1;
     colours.push("#"+(x * 0x010101).toString(16).toUpperCase());
-    console.log(colours[i]);
+    //console.log(colours[i]);
   }
   return colours;
 };
@@ -18,7 +18,9 @@ const COLOURS = getColours();
 // Construct the z-plane, and get its width and height.
 const width = 320;
 const height = 320;
-const zplane = ZPlane.new(-0.1, 0.651, 2.0, width, height);
+const scale = 2.0;
+//(-0.1, 0.651)
+const zplane = ZPlane.new(-0.1, 0.651, scale, width, height);
 
 // Give the canvas room for all of our cells and a 1px border
 // around each of them.
@@ -62,7 +64,6 @@ const drawCells = () => {
     CELL_SIZE * height
   );
 
-
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
       const idx = getIndex(row, col);
@@ -79,6 +80,18 @@ const drawCells = () => {
       );
     }
   }
+
+  // plot the locus
+  ctx.fillStyle = "#FF0000";
+  const idx = getIndex(zplane.locus_r(), zplane.locus_i());
+  //console.log(idx, zplane.locus_r(), zplane.locus_i());
+  ctx.fillRect(
+    zplane.locus_r() * CELL_SIZE-1,
+    zplane.locus_i() * CELL_SIZE-1,
+    CELL_SIZE+1,
+    CELL_SIZE+1
+  );
+
 
   ctx.stroke();
 };
@@ -104,5 +117,36 @@ playPauseButton.addEventListener("click", event => {
     pause();
   }
 });
+
+(function() {
+  "use strict";
+
+  document.onmousemove = handleMouseMove;
+  function handleMouseMove(event) {
+    var dot, eventDoc, doc, body, pageX, pageY;
+    
+    event = event || window.event; // IE-ism
+    
+    // If pageX/Y aren't available and clientX/Y
+    // are, calculate pageX/Y - logic taken from jQuery
+    // Calculate pageX/Y if missing and clientX/Y available
+    // if (event.pageX == null && event.clientX != null) {
+    //   eventDoc = (event.target && event.target.ownerDocument) || document;
+    //   doc = eventDoc.documentElement;
+    //   body = eventDoc.body;
+
+    //   event.pageX = event.clientX +
+    //     (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
+    //     (doc && doc.clientLeft || body && body.clientLeft || 0);
+    //   event.pageY = event.clientY +
+    //     (doc && doc.scrollTop  || body && body.scrollTop  || 0) -
+    //     (doc && doc.clientTop  || body && body.clientTop  || 0 );
+    // }
+
+    zplane.set_attract_r(scale * (event.pageX - window.innerWidth/2) / width)
+    zplane.set_attract_i(scale * (event.pageY - window.innerHeight/2) / width)
+  }
+})();
+
 
 play();
