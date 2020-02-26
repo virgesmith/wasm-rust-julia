@@ -4,6 +4,7 @@ use wasm_bindgen::prelude::*;
 use num_complex::Complex as Cplx;
 
 use crate::utils;
+use crate::ZPlane;
 
 // need to copy this from rand beacuse the crate links to C++ static libs
 pub struct LCG {
@@ -27,17 +28,11 @@ impl LCG {
 
 }
 
-
 #[wasm_bindgen]
-pub struct ZPlane {
-  scale: f64,
-  offset: f64,
-  mult: f64, 
-  width: u32,
-  height: u32,
+pub struct Julia {
+  z: ZPlane,
   c: Cplx<f64>, // as in z <-> z*z + c
   a: Cplx<f64>, // attrction point that c moves to
-  cells: Vec<u8>,
   rng: LCG
 }
 
@@ -47,47 +42,32 @@ const MAX_DEPTH: u8 = 14;
 const SPEED: f64 = 0.01;
 
 #[wasm_bindgen] 
-impl ZPlane {
+impl Julia {
 
-  pub fn new(cr: f64, ci: f64, scale: f64, width: u32, height: u32) -> ZPlane {
+  pub fn new(cr: f64, ci: f64, scale: f64, width: u32, height: u32) -> Julia {
 
     utils::set_panic_hook();
 
-    let cells = vec![0u8; (width * height) as usize];
-
-    let mut zplane = ZPlane {
-      scale: scale,
-      offset: (width / 2) as f64,
-      mult: (width / 2) as f64 / scale,
-      width: width,
-      height: height,
+    let mut julia = Julia {
+      z: ZPlane::new(Cplx::new(-scale, -scale), Cplx::new(scale, scale), width, height),
       c: Cplx::new(cr, ci),
       a: Cplx::new(0.0, 0.0),
-      cells: cells,
       rng: LCG::new(19937)
     };
-    zplane.draw();
-    zplane
-  }
-
-  pub fn width(&self) -> u32 {
-    self.width
-  }
-
-  pub fn height(&self) -> u32 {
-    self.height
+    julia.draw();
+    julia
   }
 
   pub fn cells(&self) -> *const u8 {
-    self.cells.as_ptr()
+    self.z.cells.as_ptr()
   }
 
   pub fn locus_r(&self) -> u32 {
-    (self.offset + self.c.re/*()*/ * self.mult) as u32
+    ((self.c.re - self.z.zmin.re) * self.z.rscale) as u32
   }
 
   pub fn locus_i(&self) -> u32 {
-    (self.offset + self.c.im/*()*/ * self.mult) as u32
+    ((self.c.im - self.z.zmin.im) * self.z.iscale) as u32
   }
 
   pub fn set_attract_r(&mut self, r: f64) {
@@ -98,21 +78,15 @@ impl ZPlane {
     self.a.im = i;
   }
 
-  fn get_index(&self, z: &Cplx<f64>) -> usize {
-    let c = (self.offset + z.re/*()*/ * self.mult) as u32;
-    let r = (self.offset + z.im/*()*/ * self.mult) as u32;
-    (r * self.width + c) as usize
-  }
-
   pub fn tick(&mut self) {
     //let theta = self.c.arg();
     //let dr = 0.0001 * (1.0 - (self.rng.next_1() as f64 / std::i32::MAX as f64));
     //self.c = Cplx::from_polar(&(self.c.norm() * (1.0 + dr)), &(theta + 0.01));
     self.c += Cplx::new((self.a.re - self.c.re) * SPEED, (self.a.im - self.c.im) * SPEED);
-    if self.c.re > self.scale { self.c.re = self.scale; }
-    if self.c.re < -self.scale { self.c.re = -self.scale; }
-    if self.c.im > self.scale { self.c.im = self.scale; }
-    if self.c.im < -self.scale { self.c.im = -self.scale; }
+    if self.c.re > self.z.zmax.re { self.c.re = self.z.zmax.re; }
+    if self.c.re < self.z.zmin.re { self.c.re = self.z.zmin.re; }
+    if self.c.im > self.z.zmax.im { self.c.im = self.z.zmax.im; }
+    if self.c.im < self.z.zmin.im { self.c.im = self.z.zmin.im; }
 
     self.draw();
   }
@@ -120,7 +94,7 @@ impl ZPlane {
   // Uses the MIIM algorithm
   fn draw(&mut self) {
     //let mut next = self.cells.clone();
-    let mut next = vec![0u8; (self.width * self.height) as usize];
+    let mut next = vec![0u8; (self.z.width * self.z.height) as usize];
 
     //let mut rng = LCG::new(19937);
 
@@ -133,16 +107,16 @@ impl ZPlane {
     }
     self.draw_impl(z, &mut next, 0);
 
-    self.cells = next;
+    self.z.cells = next;
   }
 
   fn draw_impl(&mut self, z: Cplx<f64>, cells: &mut Vec<u8>, depth: u8) {
 
     let z = (z - self.c).sqrt();
 
-    let idx = self.get_index(&z);
+    let idx = self.z.get_index(&z);
     cells[idx] += 1;
-    let idx = self.get_index(&-z);
+    let idx = self.z.get_index(&-z);
     cells[idx] += 1;
     if depth >= MAX_DEPTH { return; }
 

@@ -1,5 +1,5 @@
 import { memory } from "wasm-julia/wasm_julia_bg";
-import { ZPlane } from "wasm-julia";
+import { Julia } from "wasm-julia";
 
 const CELL_SIZE = 3; // px
 
@@ -18,12 +18,10 @@ const COLOURS = getColours();
 // Construct the z-plane, and get its width and height.
 const width = 320;
 const height = 320;
-const scale = 2.0;
+const scale = 2.0; // i.e. [-1, +1]
 //(-0.1, 0.651)
-const zplane = ZPlane.new(-0.1, 0.651, scale, width, height);
+const julia = Julia.new(-0.1, 0.651, scale, width, height);
 
-// Give the canvas room for all of our cells and a 1px border
-// around each of them.
 const canvas = document.getElementById("julia-canvas");
 canvas.height = CELL_SIZE * height;
 canvas.width = CELL_SIZE * width;
@@ -40,7 +38,7 @@ let animationId = null;
 // result of `requestAnimationFrame` is assigned to
 // `animationId`.
 const renderLoop = () => {
-  zplane.tick();
+  julia.tick();
   drawCells();
 
   animationId = requestAnimationFrame(renderLoop);
@@ -51,7 +49,7 @@ const isPaused = () => {
 };
 
 const drawCells = () => {
-  const cellsPtr = zplane.cells();
+  const cellsPtr = julia.cells();
   const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
 
   ctx.beginPath();
@@ -83,11 +81,10 @@ const drawCells = () => {
 
   // plot the locus
   ctx.fillStyle = "#FF0000";
-  const idx = getIndex(zplane.locus_r(), zplane.locus_i());
-  //console.log(idx, zplane.locus_r(), zplane.locus_i());
+  const idx = getIndex(julia.locus_r(), julia.locus_i());
   ctx.fillRect(
-    zplane.locus_r() * CELL_SIZE-1,
-    zplane.locus_i() * CELL_SIZE-1,
+    julia.locus_r() * CELL_SIZE-1,
+    julia.locus_i() * CELL_SIZE-1,
     CELL_SIZE+1,
     CELL_SIZE+1
   );
@@ -143,8 +140,9 @@ playPauseButton.addEventListener("click", event => {
     //     (doc && doc.clientTop  || body && body.clientTop  || 0 );
     // }
 
-    zplane.set_attract_r(scale * (event.pageX - window.innerWidth/2) / width)
-    zplane.set_attract_i(scale * (event.pageY - window.innerHeight/2) / width)
+    julia.set_attract_r(scale * (event.pageX - window.innerWidth/2) / width)
+    julia.set_attract_i(scale * (event.pageY - window.innerHeight/2) / width)
+    //console.log(scale * (event.pageX - window.innerWidth/2) / width, scale * (event.pageY - window.innerHeight/2) / width);
   }
 })();
 
