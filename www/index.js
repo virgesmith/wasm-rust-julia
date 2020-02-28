@@ -1,19 +1,39 @@
-import { memory } from "wasm-julia/wasm_julia_bg";
-import { Julia } from "wasm-julia";
+import { memory, mandel_cells } from "wasm-julia/wasm_julia_bg";
+import { Julia, Mandel } from "wasm-julia";
 
 const CELL_SIZE = 3; // px
 
-function getColours() {
+function colour(r, g, b) {
+  var s = (r*65536+g*256+b).toString(16).toUpperCase();
+  while(s.length < 6) { s = "0" + s; }
+  return "#" + s;
+}
+
+function getGreyscale() {
   var colours = [];
   for (var i=0; i < 256; ++i) {
     var x = Math.round((16 - Math.sqrt(i))*16) - 1;
-    colours.push("#"+(x * 0x010101).toString(16).toUpperCase());
-    //console.log(colours[i]);
+    colours.push(colour(x,x,x));
+    //console.log(colours[i], colour(x,x,x));
   }
   return colours;
 };
 
-const COLOURS = getColours();
+function getColours() {
+  var colours = [];
+  for (var i=0; i < 256; ++i) {
+    var r = 255-Math.round(127.5 *(1.0-Math.cos(i * Math.PI/255)));
+    var g = 255-Math.round(127.5 *(1.0-Math.cos(i * 3*Math.PI/255)));
+    var b = 255-Math.round(127.5 *(1.0-Math.cos(i * 5*Math.PI/255)));
+    
+    colours.push(colour(r, g, b));
+    console.log(colours[i]);
+  }
+  return colours;
+};
+
+
+const COLOURS = getGreyscale();
 
 // Construct the z-plane, and get its width and height.
 const width = 320;
@@ -21,6 +41,7 @@ const height = 320;
 const scale = 2.0; // i.e. [-1, +1]
 //(-0.1, 0.651)
 const julia = Julia.new(-0.1, 0.651, scale, width, height);
+//const mandel = Mandel.new(width, height);
 
 const canvas = document.getElementById("julia-canvas");
 canvas.height = CELL_SIZE * height;
@@ -49,6 +70,7 @@ const isPaused = () => {
 };
 
 const drawCells = () => {
+  //const cellsPtr = julia.cells();
   const cellsPtr = julia.cells();
   const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
 
@@ -146,5 +168,36 @@ playPauseButton.addEventListener("click", event => {
   }
 })();
 
+// (function() {
+//     "use strict";
+  
+//     document.onmousedown = handleMouseClick;
+//     function handleMouseClick(event) {
+//       var dot, eventDoc, doc, body, pageX, pageY;
+      
+//       event = event || window.event; // IE-ism
+      
+//       // If pageX/Y aren't available and clientX/Y
+//       // are, calculate pageX/Y - logic taken from jQuery
+//       // Calculate pageX/Y if missing and clientX/Y available
+//       // if (event.pageX == null && event.clientX != null) {
+//       //   eventDoc = (event.target && event.target.ownerDocument) || document;
+//       //   doc = eventDoc.documentElement;
+//       //   body = eventDoc.body;
+  
+//       //   event.pageX = event.clientX +
+//       //     (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
+//       //     (doc && doc.clientLeft || body && body.clientLeft || 0);
+//       //   event.pageY = event.clientY +
+//       //     (doc && doc.scrollTop  || body && body.scrollTop  || 0) -
+//       //     (doc && doc.clientTop  || body && body.clientTop  || 0 );
+//       // }
+  
+//       console.log(mandel.zoom((event.pageX - window.innerWidth/2 + width/2) ,
+//                    (event.pageY - window.innerHeight/2 + height /2)));
+//       drawCells();
+//     }
+//   })();
+  
 
 play();

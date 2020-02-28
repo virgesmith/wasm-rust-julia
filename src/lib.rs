@@ -1,6 +1,7 @@
 
 mod utils;
 mod julia;
+mod mandel;
 
 use num_complex::Complex as Cplx;
 
@@ -51,6 +52,12 @@ impl ZPlane {
     let r = ((z.re - self.zmin.re) * self.rscale) as u32;
     let c = ((z.im - self.zmin.im) * self.iscale) as u32; 
     (c * self.width + r) as usize
+  }
+
+  fn get_point(&self, r: u32, c: u32) -> (Cplx::<f64>, usize) {
+    (Cplx::new(r as f64 / self.rscale + self.zmin.re, 
+              c as f64 / self.iscale + self.zmin.im), 
+    (c * self.width + r) as usize)
   }
 
 }
