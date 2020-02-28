@@ -1,20 +1,17 @@
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const path = require('path');
 
-// change below:
-// bootstrap.js -> bootstrap_mandel.js
-// index.html -> mandel.html
-// stop, rebuild, start
-// navigate to /mandel.html
-
 module.exports = {
-  entry: "./bootstrap.js",
+  entry: {
+    julia: "./bootstrap_julia.js",
+    mandel: "./bootstrap_mandel.js",
+  },
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "bootstrap.js",
+    filename: "bootstrap_[name].js",
   },
-  mode: "development",
+  mode: "production",
   plugins: [
-    new CopyWebpackPlugin(['index.html'])
+    new CopyWebpackPlugin(['julia.html', 'mandel.html'])
   ],
 };
