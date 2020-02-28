@@ -1,48 +1,19 @@
-import { memory, mandel_cells } from "wasm-julia/wasm_julia_bg";
-import { Julia, Mandel } from "wasm-julia";
+import { memory } from "wasm-julia/wasm_julia_bg";
+import { Mandel } from "wasm-julia";
+import { getColours } from "./common";
 
 const CELL_SIZE = 3; // px
 
-function colour(r, g, b) {
-  var s = (r*65536+g*256+b).toString(16).toUpperCase();
-  while(s.length < 6) { s = "0" + s; }
-  return "#" + s;
-}
+const DEPTH = 1024;
 
-function getGreyscale() {
-  var colours = [];
-  for (var i=0; i < 256; ++i) {
-    var x = Math.round((16 - Math.sqrt(i))*16) - 1;
-    colours.push(colour(x,x,x));
-    //console.log(colours[i], colour(x,x,x));
-  }
-  return colours;
-};
-
-function getColours() {
-  var colours = [];
-  for (var i=0; i < 256; ++i) {
-    var r = 255-Math.round(127.5 *(1.0-Math.cos(i * Math.PI/255)));
-    var g = 255-Math.round(127.5 *(1.0-Math.cos(i * 3*Math.PI/255)));
-    var b = 255-Math.round(127.5 *(1.0-Math.cos(i * 5*Math.PI/255)));
-    
-    colours.push(colour(r, g, b));
-  }
-  return colours;
-};
-
-
-const COLOURS = getColours();
+const COLOURS = getColours(DEPTH);
 
 // Construct the z-plane, and get its width and height.
 const width = 640;
 const height = 640;
-const scale = 2.0; // i.e. [-1, +1]
-//(-0.1, 0.651)
-//const julia = Julia.new(-0.1, 0.651, scale, width, height);
-const mandel = Mandel.new(width, height);
+const mandel = Mandel.new(width, height, DEPTH);
 
-const canvas = document.getElementById("julia-canvas");
+const canvas = document.getElementById("mandel-canvas");
 canvas.height = CELL_SIZE * height;
 canvas.width = CELL_SIZE * width;
 
@@ -52,26 +23,9 @@ const getIndex = (row, column) => {
   return row * width + column;
 };
 
-let animationId = null;
-
-// This function is the same as before, except the
-// result of `requestAnimationFrame` is assigned to
-// `animationId`.
-const renderLoop = () => {
-  //julia.tick();
-  drawCells();
-
-  //animationId = requestAnimationFrame(renderLoop);
-};
-
-const isPaused = () => {
-  return animationId === null;
-};
-
 const drawCells = () => {
-  //const cellsPtr = julia.cells();
   const cellsPtr = mandel.cells();
-  const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
+  const cells = new Uint16Array(memory.buffer, cellsPtr, width * height);
 
   ctx.beginPath();
 
@@ -100,104 +54,39 @@ const drawCells = () => {
     }
   }
 
-  // // plot the locus
-  // ctx.fillStyle = "#FF0000";
-  // const idx = getIndex(julia.locus_r(), julia.locus_i());
-  // ctx.fillRect(
-  //   julia.locus_r() * CELL_SIZE-1,
-  //   julia.locus_i() * CELL_SIZE-1,
-  //   CELL_SIZE+1,
-  //   CELL_SIZE+1
-  // );
-
-
   ctx.stroke();
 };
 
-
-//const playPauseButton = document.getElementById("play-pause");
-
-// const play = () => {
-//   //playPauseButton.textContent = "⏸";
-//   renderLoop();
-// };
-
-// const pause = () => {
-//   playPauseButton.textContent = "▶";
-//   cancelAnimationFrame(animationId);
-//   animationId = null;
-// };
-
-// playPauseButton.addEventListener("click", event => {
-//   if (isPaused()) {
-//     play();
-//   } else {
-//     pause();
-//   }
-// });
-
-// (function() {
-//   "use strict";
-
-//   document.onmousemove = handleMouseMove;
-//   function handleMouseMove(event) {
-//     var dot, eventDoc, doc, body, pageX, pageY;
-    
-//     event = event || window.event; // IE-ism
-    
-//     // If pageX/Y aren't available and clientX/Y
-//     // are, calculate pageX/Y - logic taken from jQuery
-//     // Calculate pageX/Y if missing and clientX/Y available
-//     // if (event.pageX == null && event.clientX != null) {
-//     //   eventDoc = (event.target && event.target.ownerDocument) || document;
-//     //   doc = eventDoc.documentElement;
-//     //   body = eventDoc.body;
-
-//     //   event.pageX = event.clientX +
-//     //     (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
-//     //     (doc && doc.clientLeft || body && body.clientLeft || 0);
-//     //   event.pageY = event.clientY +
-//     //     (doc && doc.scrollTop  || body && body.scrollTop  || 0) -
-//     //     (doc && doc.clientTop  || body && body.clientTop  || 0 );
-//     // }
-
-//     julia.set_attract_r(scale * (event.pageX - window.innerWidth/2) / width)
-//     julia.set_attract_i(scale * (event.pageY - window.innerHeight/2) / width)
-//     //console.log(scale * (event.pageX - window.innerWidth/2) / width, scale * (event.pageY - window.innerHeight/2) / width);
-//   }
-// })();
-
 (function() {
-    "use strict";
-  
-    document.onmousedown = handleMouseClick;
-    function handleMouseClick(event) {
-      var dot, eventDoc, doc, body, pageX, pageY;
-      
-      event = event || window.event; // IE-ism
-      
-      // If pageX/Y aren't available and clientX/Y
-      // are, calculate pageX/Y - logic taken from jQuery
-      // Calculate pageX/Y if missing and clientX/Y available
-      // if (event.pageX == null && event.clientX != null) {
-      //   eventDoc = (event.target && event.target.ownerDocument) || document;
-      //   doc = eventDoc.documentElement;
-      //   body = eventDoc.body;
-  
-      //   event.pageX = event.clientX +
-      //     (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
-      //     (doc && doc.clientLeft || body && body.clientLeft || 0);
-      //   event.pageY = event.clientY +
-      //     (doc && doc.scrollTop  || body && body.scrollTop  || 0) -
-      //     (doc && doc.clientTop  || body && body.clientTop  || 0 );
-      // }
-  
-      console.log(mandel.zoom((event.pageX - window.innerWidth/2 + width/2) ,
-                   (event.pageY - window.innerHeight/2 + height /2)));
-      drawCells();
-    }
-  })();
+  "use strict";
+
+  document.onmousedown = handleMouseClick;
+  function handleMouseClick(event) {
+    var dot, eventDoc, doc, body, pageX, pageY;
+    
+    event = event || window.event; // IE-ism
+    
+    // If pageX/Y aren't available and clientX/Y
+    // are, calculate pageX/Y - logic taken from jQuery
+    // Calculate pageX/Y if missing and clientX/Y available
+    // if (event.pageX == null && event.clientX != null) {
+    //   eventDoc = (event.target && event.target.ownerDocument) || document;
+    //   doc = eventDoc.documentElement;
+    //   body = eventDoc.body;
+
+    //   event.pageX = event.clientX +
+    //     (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
+    //     (doc && doc.clientLeft || body && body.clientLeft || 0);
+    //   event.pageY = event.clientY +
+    //     (doc && doc.scrollTop  || body && body.scrollTop  || 0) -
+    //     (doc && doc.clientTop  || body && body.clientTop  || 0 );
+    // }
+
+    console.log(mandel.zoom((event.pageX - window.innerWidth/2 + width/2) ,
+                  (event.pageY - window.innerHeight/2 + height /2)));
+    drawCells();
+  }
+})();
   
 
-//play();
 drawCells();

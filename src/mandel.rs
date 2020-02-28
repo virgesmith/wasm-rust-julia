@@ -6,19 +6,19 @@ use num_complex::Complex as Cplx;
 use crate::utils;
 use crate::ZPlane;
 
+type Cell = u16;
+
 #[wasm_bindgen]
 pub struct Mandel {
-  z: ZPlane,
-  // c: Cplx<f64>, // as in z <-> z*z + c
-  // a: Cplx<f64>, // attrction point that c moves to
+  z: ZPlane<Cell>,
+  depth: Cell
 }
-
 
 #[wasm_bindgen] 
 impl Mandel {
 
   // TODO need non-centred zplane...
-  pub fn new(width: u32, height: u32) -> Mandel {
+  pub fn new(width: u32, height: u32, maxiter: Cell) -> Mandel {
 
     utils::set_panic_hook();
 
@@ -26,13 +26,14 @@ impl Mandel {
     let top_right = Cplx::<f64>::new(0.5, 1.25);
 
     let mut mandel = Mandel {
-      z: ZPlane::new(bottom_left, top_right, width, height),
+      z: ZPlane::<Cell>::new(bottom_left, top_right, width, height),
+      depth: maxiter - 1
     };
     mandel.draw();
     mandel
   }
 
-  pub fn cells(&self) -> *const u8 {
+  pub fn cells(&self) -> *const Cell {
     self.z.cells.as_ptr()
   }
 
@@ -57,12 +58,19 @@ impl Mandel {
       for col in 0..self.z.width {
         let (c, idx) = self.z.get_point(row, col);
         let mut z = Cplx::new(0.0, 0.0);
-        let mut it = 0;
-        while it < 256 && z.norm_sqr() < 4.0 {
-          z = z * z + c;
+        let mut it: Cell = 0;
+        let mut r2 = 0.0;
+        let mut i2 = 0.0;
+        while it < self.depth && (r2 + i2) < 4.0 {
+          //z = z * z + c;
+          // hand optimised
+          z.im = (z.re + z.re) * z.im + c.im; 
+          z.re = r2 - i2 + c.re;
+          r2 = z.re * z.re;
+          i2 = z.im * z.im;  
           it += 1;
         }
-        self.z.cells[idx] = it as u8;
+        self.z.cells[idx] = it as Cell;
       }
     }
   }

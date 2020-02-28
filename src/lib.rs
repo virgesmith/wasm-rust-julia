@@ -4,6 +4,7 @@ mod julia;
 mod mandel;
 
 use num_complex::Complex as Cplx;
+use num_traits::{Unsigned, Zero};
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -19,7 +20,7 @@ macro_rules! log {
   }
 }
 
-pub struct ZPlane {
+pub struct ZPlane<T> {
   // scale: f64,
   // z0: Cplx<f64>,
   zmin: Cplx<f64>, // bottom left
@@ -28,11 +29,12 @@ pub struct ZPlane {
   iscale: f64,
   width: u32,
   height: u32,
-  cells: Vec<u8>,
+  cells: Vec<T>,
 }
 
-impl ZPlane {
-  pub fn new(zmin: Cplx<f64>, zmax: Cplx<f64>, width: u32, height: u32) -> ZPlane {
+impl<T: Zero + Unsigned + Clone> ZPlane<T> {
+
+  pub fn new(zmin: Cplx<f64>, zmax: Cplx<f64>, width: u32, height: u32) -> ZPlane<T> {
 
     ZPlane {
       zmin: zmin,
@@ -41,7 +43,7 @@ impl ZPlane {
       height: height,
       rscale: width as f64 / (zmax.re - zmin.re),
       iscale: height as f64 / (zmax.im - zmin.im),
-      cells: vec![0u8; (width * height) as usize]
+      cells: vec![T::zero(); (width * height) as usize]
     }
   }
 

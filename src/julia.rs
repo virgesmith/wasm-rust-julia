@@ -30,7 +30,7 @@ impl LCG {
 
 #[wasm_bindgen]
 pub struct Julia {
-  z: ZPlane,
+  z: ZPlane<u8>,
   c: Cplx<f64>, // as in z <-> z*z + c
   a: Cplx<f64>, // attrction point that c moves to
   rng: LCG
@@ -49,7 +49,7 @@ impl Julia {
     utils::set_panic_hook();
 
     let mut julia = Julia {
-      z: ZPlane::new(Cplx::new(-scale, -scale), Cplx::new(scale, scale), width, height),
+      z: ZPlane::<u8>::new(Cplx::new(-scale, -scale), Cplx::new(scale, scale), width, height),
       c: Cplx::new(cr, ci),
       a: Cplx::new(0.0, 0.0),
       rng: LCG::new(19937)
