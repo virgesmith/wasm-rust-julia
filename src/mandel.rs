@@ -50,6 +50,7 @@ impl Mandel {
     self.z.zmax.re = c.re + dr;
     self.z.zmax.im = c.im + di;
     self.draw();
+    //format!("({},{}) => {:?} {:} {:}", row, col, c, self.z.rscale, self.z.height)
   }
   
   fn draw(&mut self) {
