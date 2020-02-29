@@ -70,12 +70,9 @@ impl Julia {
     ((self.c.im - self.z.zmin.im) * self.z.iscale) as u32
   }
 
-  pub fn set_attract_r(&mut self, r: f64) {
-    self.a.re = r;
-  }
-
-  pub fn set_attract_i(&mut self, i: f64) {
-    self.a.im = i;
+  pub fn set_attract(&mut self, row: u32, col: u32) {
+    let (c, _) = self.z.get_point(row, col);
+    self.a = c;
   }
 
   pub fn tick(&mut self) {
@@ -101,7 +98,7 @@ impl Julia {
     let mut z = Cplx::new(0.0, 0.0);
     let mut sign = 1.0;
     // warmup
-    for _ in 0..15 {
+    for _ in 0..25 {
       if self.rng.next_1() % 2 == 1 { sign *= -1.0; }
       z = (z - self.c).sqrt() * sign;
     }

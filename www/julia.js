@@ -2,19 +2,24 @@ import { memory } from "wasm-julia/wasm_julia_bg";
 import { Julia } from "wasm-julia";
 import { getGreyscale } from "./common";
 
-const CELL_SIZE = 3; // px
+const CELL_SIZE = 2; // px
 
 const COLOURS = getGreyscale();
 
+const canvas = document.getElementById("julia-canvas");
+
 // Construct the z-plane, and get its width and height.
-const width = 320;
-const height = 320;
+// If it's resolution does not match change it
+if (canvas.width !== canvas.clientWidth || canvas.clientHeight !== height) {
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+}
+
+const width = canvas.width / CELL_SIZE;
+const height = canvas.height / CELL_SIZE;
+// Construct the z-plane, and get its width and height.
 const scale = 2.0; // i.e. [-2, +2]
 const julia = Julia.new(-0.1, 0.651, scale, width, height);
-
-const canvas = document.getElementById("julia-canvas");
-canvas.height = CELL_SIZE * height;
-canvas.width = CELL_SIZE * width;
 
 const ctx = canvas.getContext('2d');
 
@@ -113,6 +118,11 @@ playPauseButton.addEventListener("click", event => {
     var dot, eventDoc, doc, body, pageX, pageY;
     
     event = event || window.event; // IE-ism
+
+    const rect = canvas.getBoundingClientRect();  
+    
+    const x = (event.clientX - rect.left) / CELL_SIZE;
+    const y = (event.clientY - rect.top) / CELL_SIZE;
     
     // If pageX/Y aren't available and clientX/Y
     // are, calculate pageX/Y - logic taken from jQuery
@@ -130,9 +140,9 @@ playPauseButton.addEventListener("click", event => {
     //     (doc && doc.clientTop  || body && body.clientTop  || 0 );
     // }
 
-    julia.set_attract_r(scale * (event.pageX - window.innerWidth/2) / width)
-    julia.set_attract_i(scale * (event.pageY - window.innerHeight/2) / width)
-    //console.log(scale * (event.pageX - window.innerWidth/2) / width, scale * (event.pageY - window.innerHeight/2) / width);
+    if (x >= 0 && y >= 0 && x <= width && y <= height) {
+      julia.set_attract(x, y);
+    }
   }
 })();
 

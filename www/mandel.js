@@ -66,9 +66,10 @@ const drawCells = () => {
     const x = (event.clientX - rect.left) / CELL_SIZE;
     const y = (event.clientY - rect.top) / CELL_SIZE;
 
-    console.log(x, y);
+    //console.log(x, y);
     if (x >= 0 && y >= 0 && x <= width && y <= height) {
-      console.log(mandel.zoom(x, y));
+      //console.log(
+      mandel.zoom(x, y);
       drawCells();
     }
   }
