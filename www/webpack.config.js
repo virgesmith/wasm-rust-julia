@@ -12,6 +12,6 @@ module.exports = {
   },
   mode: "production",
   plugins: [
-    new CopyWebpackPlugin(['julia.html', 'mandel.html'])
+    new CopyWebpackPlugin({ "patterns": ['julia.html', 'mandel.html']})
   ],
 };
