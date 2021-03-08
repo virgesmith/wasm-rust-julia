@@ -21,8 +21,6 @@ macro_rules! log {
 }
 
 pub struct ZPlane<T> {
-  // scale: f64,
-  // z0: Cplx<f64>,
   zmin: Cplx<f64>, // bottom left
   zmax: Cplx<f64>, // top right
   rscale: f64,
@@ -37,10 +35,10 @@ impl<T: Zero + Unsigned + Clone> ZPlane<T> {
   pub fn new(zmin: Cplx<f64>, zmax: Cplx<f64>, width: u32, height: u32) -> ZPlane<T> {
 
     ZPlane {
-      zmin: zmin,
-      zmax: zmax,
-      width: width,
-      height: height,
+      zmin,
+      zmax,
+      width,
+      height,
       rscale: width as f64 / (zmax.re - zmin.re),
       iscale: height as f64 / (zmax.im - zmin.im),
       cells: vec![T::zero(); (width * height) as usize]
@@ -48,17 +46,14 @@ impl<T: Zero + Unsigned + Clone> ZPlane<T> {
   }
 
   fn get_index(&self, z: &Cplx<f64>) -> usize {
-    // let c = (self.offset + z.re/*()*/ * self.mult) as u32;
-    // let r = (self.offset + z.im/*()*/ * self.mult) as u32;
-    //let idx = (z - self.zmin) * self.zmult;
     let r = ((z.re - self.zmin.re) * self.rscale) as u32;
-    let c = ((z.im - self.zmin.im) * self.iscale) as u32; 
+    let c = ((z.im - self.zmin.im) * self.iscale) as u32;
     (c * self.width + r) as usize
   }
 
   fn get_point(&self, r: u32, c: u32) -> (Cplx::<f64>, usize) {
-    (Cplx::new(r as f64 / self.rscale + self.zmin.re, 
-              c as f64 / self.iscale + self.zmin.im), 
+    (Cplx::new(r as f64 / self.rscale + self.zmin.re,
+              c as f64 / self.iscale + self.zmin.im),
     (c * self.width + r) as usize)
   }
 
