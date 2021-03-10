@@ -37,20 +37,16 @@ impl Mandel {
     self.z.cells.as_ptr()
   }
 
-  pub fn min_r(&self) -> f64 {
-    self.z.zmin.re
+  pub fn mid_r(&self) -> f64 {
+    (self.z.zmin.re + self.z.zmax.re) / 2.0
   }
 
-  pub fn min_i(&self) -> f64 {
-    self.z.zmin.im
+  pub fn mid_i(&self) -> f64 {
+    (self.z.zmin.im + self.z.zmax.im) / 2.0
   }
 
-  pub fn max_r(&self) -> f64 {
-    self.z.zmax.re
-  }
-
-  pub fn max_i(&self) -> f64 {
-    self.z.zmin.im
+  pub fn scale(&self) -> f64 {
+    self.z.zmax.re - self.z.zmin.re
   }
 
   pub fn zoom(&mut self, row: u32, col: u32) {

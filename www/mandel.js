@@ -10,7 +10,7 @@ const COLOURS = getColours(DEPTH);
 
 const canvas = document.getElementById("mandel-canvas");
 
-const zmin = document.getElementById("zmin");
+const info = document.getElementById("info");
 
 // Construct the z-plane, and get its width and height.
 // If it's resolution does not match change it
@@ -56,7 +56,7 @@ const drawCells = () => {
 };
 
 const updateCoords = () => {
-  zmin.innerHTML = `(${mandel.min_r()} + ${mandel.min_i()}i), (${mandel.max_r()} + ${mandel.max_i()}i)`;
+  info.innerHTML = `centre=${mandel.mid_r()}+${mandel.mid_i()}i scale=${mandel.scale()}`;
 };
 
 (function() {
