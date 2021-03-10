@@ -4,11 +4,13 @@ import { getColours } from "./common";
 
 const CELL_SIZE = 1; // px
 
-const DEPTH = 1024;
+const DEPTH = 2048;
 
 const COLOURS = getColours(DEPTH);
 
 const canvas = document.getElementById("mandel-canvas");
+
+const zmin = document.getElementById("zmin");
 
 // Construct the z-plane, and get its width and height.
 // If it's resolution does not match change it
@@ -53,27 +55,32 @@ const drawCells = () => {
   ctx.stroke();
 };
 
+const updateCoords = () => {
+  zmin.innerHTML = `(${mandel.min_r()} + ${mandel.min_i()}i), (${mandel.max_r()} + ${mandel.max_i()}i)`;
+};
+
 (function() {
   "use strict";
 
   document.onmousedown = handleMouseClick;
   function handleMouseClick(event) {
-    var dot, eventDoc, doc, body, pageX, pageY;
-    
+    //var dot, eventDoc, doc, body, pageX, pageY;
+
     event = event || window.event; // IE-ism
-    const rect = canvas.getBoundingClientRect();  
-    
+    const rect = canvas.getBoundingClientRect();
+
     const x = (event.clientX - rect.left) / CELL_SIZE;
     const y = (event.clientY - rect.top) / CELL_SIZE;
 
     //console.log(x, y);
     if (x >= 0 && y >= 0 && x <= width && y <= height) {
-      //console.log(
       mandel.zoom(x, y);
       drawCells();
+      updateCoords();
     }
   }
 })();
-  
+
 
 drawCells();
+updateCoords();

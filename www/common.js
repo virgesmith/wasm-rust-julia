@@ -25,7 +25,7 @@ export function getColours(n) {
     var r = 255 - Math.round(127.5 * (1.0 - Math.cos(i *     t)));
     var g = 255 - Math.round(127.5 * (1.0 - Math.cos(i * 3 * t)));
     var b = 255 - Math.round(127.5 * (1.0 - Math.cos(i * 5 * t)));
-    
+
     colours.push(colour(r, g, b));
   }
   return colours;

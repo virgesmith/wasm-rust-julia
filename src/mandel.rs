@@ -14,7 +14,7 @@ pub struct Mandel {
   depth: Cell
 }
 
-#[wasm_bindgen] 
+#[wasm_bindgen]
 impl Mandel {
 
   // TODO need non-centred zplane...
@@ -37,6 +37,21 @@ impl Mandel {
     self.z.cells.as_ptr()
   }
 
+  pub fn min_r(&self) -> f64 {
+    self.z.zmin.re
+  }
+
+  pub fn min_i(&self) -> f64 {
+    self.z.zmin.im
+  }
+
+  pub fn max_r(&self) -> f64 {
+    self.z.zmax.re
+  }
+
+  pub fn max_i(&self) -> f64 {
+    self.z.zmin.im
+  }
 
   pub fn zoom(&mut self, row: u32, col: u32) {
 
@@ -52,7 +67,7 @@ impl Mandel {
     self.draw();
     //format!("({},{}) => {:?} {:} {:}", row, col, c, self.z.rscale, self.z.height)
   }
-  
+
   fn draw(&mut self) {
 
     for row in 0..self.z.height {
@@ -62,16 +77,30 @@ impl Mandel {
         let mut it: Cell = 0;
         let mut r2 = 0.0;
         let mut i2 = 0.0;
+        let mut z_prev = z;
+        let mut period = 0;
         while it < self.depth && (r2 + i2) < 4.0 {
           //z = z * z + c;
           // hand optimised
-          z.im = (z.re + z.re) * z.im + c.im; 
+          z.im = (z.re + z.re) * z.im + c.im;
           z.re = r2 - i2 + c.re;
           r2 = z.re * z.re;
-          i2 = z.im * z.im;  
+          i2 = z.im * z.im;
           it += 1;
+
+          // check for periodicity and break early
+          if z == z_prev {
+            it = self.depth;
+            break;
+          }
+          period += 1;
+          // update ref value every 20th iteration (can detect cycles up to 20 iterations long)
+          if period > 20 {
+            period = 0;
+            z_prev = z;
+          }
         }
-        self.z.cells[idx] = it as Cell;
+        self.z.cells[idx] = it;
       }
     }
   }

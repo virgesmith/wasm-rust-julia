@@ -2,6 +2,9 @@
 name = "wasm-julia"
 version = "0.1.0"
 authors = ["virgesmith <andrew@friarswood.net>"]
+repository = "https://github.com/virgesmith/rust-wasm-julia"
+description = "Fractal rendering in the browser using rust and web assembly"
+license = "MIT"
 edition = "2018"
 
 [lib]
@@ -12,7 +15,6 @@ default = ["console_error_panic_hook"]
 
 [dependencies]
 wasm-bindgen = "0.2"
-#complex = { path = "../../rust101/complex" }
 num-complex = "*"
 num-traits = "*"
 web-sys= { version = "*", features = ["console"] }
