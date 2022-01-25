@@ -18,7 +18,7 @@ impl LCG {
 
   pub fn new(seed: u32) -> LCG {
     assert_ne!(seed, 0);
-    LCG{r: seed}   
+    LCG{r: seed}
   }
 
   fn next_1(&mut self) -> u32 {
@@ -36,12 +36,12 @@ pub struct Julia {
   rng: LCG
 }
 
-const MAX_DEPTH: u8 = 14;
+const MAX_DEPTH: u8 = 15;
 
 // speed at which c is pulled to a
 const SPEED: f64 = 0.01;
 
-#[wasm_bindgen] 
+#[wasm_bindgen]
 impl Julia {
 
   pub fn new(cr: f64, ci: f64, scale: f64, width: u32, height: u32) -> Julia {
@@ -76,9 +76,6 @@ impl Julia {
   }
 
   pub fn tick(&mut self) {
-    //let theta = self.c.arg();
-    //let dr = 0.0001 * (1.0 - (self.rng.next_1() as f64 / std::i32::MAX as f64));
-    //self.c = Cplx::from_polar(&(self.c.norm() * (1.0 + dr)), &(theta + 0.01));
     self.c += Cplx::new((self.a.re - self.c.re) * SPEED, (self.a.im - self.c.im) * SPEED);
     if self.c.re > self.z.zmax.re { self.c.re = self.z.zmax.re; }
     if self.c.re < self.z.zmin.re { self.c.re = self.z.zmin.re; }
@@ -87,34 +84,65 @@ impl Julia {
 
     self.draw();
   }
-  
-  // Uses the MIIM algorithm
+
   fn draw(&mut self) {
     //let mut next = self.cells.clone();
     let mut next = vec![0u8; (self.z.width * self.z.height) as usize];
 
-    //let mut rng = LCG::new(19937);
-
     let mut z = Cplx::new(0.0, 0.0);
-    let mut sign = 1.0;
+    //let mut sign = 1.0;
     // warmup
-    for _ in 0..25 {
-      if self.rng.next_1() % 2 == 1 { sign *= -1.0; }
-      z = (z - self.c).sqrt() * sign;
+    for _ in 0..200000 {
+      //if self.rng.next_1() % 2 == 1 { sign *= -1.0; }
+      z = (z - self.c).sqrt();
+      let mut idx = self.z.get_index(&z);
+      if next[idx] > 1 {
+        z = -z;
+        idx = self.z.get_index(&-z);
+      }
+      next[idx] += 1;
     }
-    self.draw_impl(z, &mut next, 0);
+    //self.draw_impl(z, &mut next, 0);
 
     self.z.cells = next;
   }
 
+  // // Uses the MIIM algorithm
+  // fn draw(&mut self) {
+  //   //let mut next = self.cells.clone();
+  //   let mut next = vec![0u8; (self.z.width * self.z.height) as usize];
+
+  //   //let mut rng = LCG::new(19937);
+
+  //   let mut z = Cplx::new(0.0, 0.0);
+  //   let mut sign = 1.0;
+  //   // warmup
+  //   for _ in 0..25 {
+  //     if self.rng.next_1() % 2 == 1 { sign *= -1.0; }
+  //     z = (z - self.c).sqrt() * sign;
+  //   }
+  //   self.draw_impl(z, &mut next, 0);
+
+  //   self.z.cells = next;
+  // }
+
   fn draw_impl(&mut self, z: Cplx<f64>, cells: &mut Vec<u8>, depth: u8) {
 
-    let z = (z - self.c).sqrt();
+    let mut z = (z - self.c).sqrt();
 
-    let idx = self.z.get_index(&z);
-    cells[idx] += 1;
-    let idx = self.z.get_index(&-z);
-    cells[idx] += 1;
+    let idxp = self.z.get_index(&z);
+    let idxn = self.z.get_index(&-z);
+    if cells[idxp] > 0 && cells[idxn] > 0 { return; }
+    cells[idxp] += 1;
+    cells[idxn] += 1;
+
+    // if cells[idxp] > 0 {
+    //   z = (-z - self.c).sqrt();
+    // }
+    // else if cells[idxn] > 0 {
+    //   z = (z - self.c).sqrt();
+    // }
+
     if depth >= MAX_DEPTH { return; }
 
     self.draw_impl(z, cells, depth+1);
