@@ -36,8 +36,9 @@ pub struct Julia {
   rng: LCG
 }
 
-const MAX_DEPTH: u8 = 13;
+const MIIM_MAX_DEPTH: u8 = 13;
 const IIM_ITERS: u32 = 100000;
+const INC: u8 = 4;
 
 // speed at which c is pulled to a
 const SPEED: f64 = 0.01;
@@ -88,34 +89,28 @@ impl Julia {
 
   fn draw(&mut self) {
     let mut next = vec![0u8; (self.z.width * self.z.height) as usize];
-    self.draw_miim(&mut next);
-    self.draw_iim(&mut next);
+    let z = self.draw_miim(&mut next);
+    self.draw_iim(z, &mut next);
     self.z.cells = next;
   }
 
-  fn draw_iim(&mut self, next: &mut Vec::<u8>) {
-
-    let mut z = Cplx::new(0.0, 0.0);
+  fn draw_iim(&mut self, mut z: Cplx<f64>, next: &mut Vec::<u8>) {
 
     for _ in 0..IIM_ITERS {
       z = (z - self.c).sqrt();
       let mut idx = self.z.get_index(&z);
-      if next[idx] > 1 {
-        next[idx] += 1;
+      if next[idx] > 0 {
+        next[idx] += INC;
         z = -z;
         idx = self.z.get_index(&z);
       }
-      next[idx] += 1;
+      next[idx] += INC;
     }
 
   }
 
   // Uses the MIIM algorithm
-  fn draw_miim(&mut self, mut next: &mut Vec::<u8>) {
-    //let mut next = self.cells.clone();
-    //let mut next = vec![0u8; (self.z.width * self.z.height) as usize];
-
-    //let mut rng = LCG::new(19937);
+  fn draw_miim(&mut self, mut next: &mut Vec::<u8>) -> Cplx<f64> {
 
     let mut z = Cplx::new(0.0, 0.0);
     let mut sign = 1.0;
@@ -125,17 +120,19 @@ impl Julia {
       z = (z - self.c).sqrt() * sign;
     }
     self.draw_miim_impl(z, &mut next, 0);
+    z
   }
 
   fn draw_miim_impl(&mut self, z: Cplx<f64>, cells: &mut Vec<u8>, depth: u8) {
 
+    // copies z - caller will not see changes
     let z = (z - self.c).sqrt();
 
     let idx = self.z.get_index(&z);
-    cells[idx] += 1;
+    cells[idx] += INC;
     let idx = self.z.get_index(&-z);
-    cells[idx] += 1;
-    if depth >= MAX_DEPTH { return; }
+    cells[idx] += INC;
+    if depth >= MIIM_MAX_DEPTH { return; }
 
     self.draw_miim_impl(z, cells, depth+1);
     self.draw_miim_impl(-z, cells, depth+1);
