@@ -36,7 +36,8 @@ pub struct Julia {
   rng: LCG
 }
 
-const MAX_DEPTH: u8 = 15;
+const MAX_DEPTH: u8 = 13;
+const IIM_ITERS: u32 = 100000;
 
 // speed at which c is pulled to a
 const SPEED: f64 = 0.01;
@@ -86,67 +87,58 @@ impl Julia {
   }
 
   fn draw(&mut self) {
-    //let mut next = self.cells.clone();
     let mut next = vec![0u8; (self.z.width * self.z.height) as usize];
-
-    let mut z = Cplx::new(0.0, 0.0);
-    //let mut sign = 1.0;
-    // warmup
-    for _ in 0..200000 {
-      //if self.rng.next_1() % 2 == 1 { sign *= -1.0; }
-      z = (z - self.c).sqrt();
-      let mut idx = self.z.get_index(&z);
-      if next[idx] > 1 {
-        z = -z;
-        idx = self.z.get_index(&-z);
-      }
-      next[idx] += 1;
-    }
-    //self.draw_impl(z, &mut next, 0);
-
+    self.draw_miim(&mut next);
+    self.draw_iim(&mut next);
     self.z.cells = next;
   }
 
-  // // Uses the MIIM algorithm
-  // fn draw(&mut self) {
-  //   //let mut next = self.cells.clone();
-  //   let mut next = vec![0u8; (self.z.width * self.z.height) as usize];
+  fn draw_iim(&mut self, next: &mut Vec::<u8>) {
 
-  //   //let mut rng = LCG::new(19937);
+    let mut z = Cplx::new(0.0, 0.0);
 
-  //   let mut z = Cplx::new(0.0, 0.0);
-  //   let mut sign = 1.0;
-  //   // warmup
-  //   for _ in 0..25 {
-  //     if self.rng.next_1() % 2 == 1 { sign *= -1.0; }
-  //     z = (z - self.c).sqrt() * sign;
-  //   }
-  //   self.draw_impl(z, &mut next, 0);
+    for _ in 0..IIM_ITERS {
+      z = (z - self.c).sqrt();
+      let mut idx = self.z.get_index(&z);
+      if next[idx] > 1 {
+        next[idx] += 1;
+        z = -z;
+        idx = self.z.get_index(&z);
+      }
+      next[idx] += 1;
+    }
 
-  //   self.z.cells = next;
-  // }
+  }
 
-  fn draw_impl(&mut self, z: Cplx<f64>, cells: &mut Vec<u8>, depth: u8) {
+  // Uses the MIIM algorithm
+  fn draw_miim(&mut self, mut next: &mut Vec::<u8>) {
+    //let mut next = self.cells.clone();
+    //let mut next = vec![0u8; (self.z.width * self.z.height) as usize];
 
-    let mut z = (z - self.c).sqrt();
+    //let mut rng = LCG::new(19937);
 
-    let idxp = self.z.get_index(&z);
-    let idxn = self.z.get_index(&-z);
-    if cells[idxp] > 0 && cells[idxn] > 0 { return; }
-    cells[idxp] += 1;
-    cells[idxn] += 1;
+    let mut z = Cplx::new(0.0, 0.0);
+    let mut sign = 1.0;
+    // warmup
+    for _ in 0..25 {
+      if self.rng.next_1() % 2 == 1 { sign *= -1.0; }
+      z = (z - self.c).sqrt() * sign;
+    }
+    self.draw_miim_impl(z, &mut next, 0);
+  }
 
-    // if cells[idxp] > 0 {
-    //   z = (-z - self.c).sqrt();
-    // }
-    // else if cells[idxn] > 0 {
-    //   z = (z - self.c).sqrt();
-    // }
+  fn draw_miim_impl(&mut self, z: Cplx<f64>, cells: &mut Vec<u8>, depth: u8) {
 
+    let z = (z - self.c).sqrt();
+
+    let idx = self.z.get_index(&z);
+    cells[idx] += 1;
+    let idx = self.z.get_index(&-z);
+    cells[idx] += 1;
     if depth >= MAX_DEPTH { return; }
 
-    self.draw_impl(z, cells, depth+1);
-    self.draw_impl(-z, cells, depth+1);
+    self.draw_miim_impl(z, cells, depth+1);
+    self.draw_miim_impl(-z, cells, depth+1);
   }
 
 }
